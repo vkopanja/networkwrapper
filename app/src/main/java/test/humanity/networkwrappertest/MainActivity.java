@@ -92,7 +92,7 @@ public class MainActivity extends ActionBarActivity implements MainActivityFragm
     }
 
     @Override
-    public void onPostExecute()
+    public void onPostExecute(String s)
     {
         ProgressBar pd = (ProgressBar) findViewById(R.id.progressBar);
         pd.setVisibility(View.GONE);

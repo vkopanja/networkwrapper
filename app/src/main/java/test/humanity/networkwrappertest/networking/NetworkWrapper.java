@@ -50,8 +50,7 @@ public class NetworkWrapper {
     private static Response response;
     private static Request request;
 
-    public NetworkWrapper(Builder builder)
-    {
+    public NetworkWrapper(Builder builder) {
         this.ctx = builder.ctx;
         this.url = builder.url;
         this.type = builder.type;
@@ -179,20 +178,15 @@ public class NetworkWrapper {
                         if(this.request == null)
                             throw new IllegalArgumentException("Request must be initalized.");
 
-//                        try
-//                        {
-//                            AsyncOkHttpNetwork network = new AsyncOkHttpNetwork();
-//                            this.response = network.execute(okHttpClient.newCall(this.request)).get();
-//                            network.execute(okHttpClient.newCall(this.request));
-//                        }
-//                        catch(InterruptedException e)
-//                        {
-//                            e.printStackTrace();
-//                        }
-//                        catch(ExecutionException e)
-//                        {
-//                            e.printStackTrace();
-//                        }
+                        try
+                        {
+                            AsyncOkHttpNetwork network = new AsyncOkHttpNetwork();
+                            this.response = network.execute(okHttpClient.newCall(this.request)).get();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        }
                     }
                     break;
             }
@@ -258,11 +252,14 @@ public class NetworkWrapper {
             }
             else if(okHttpClient != null)
             {
-//                if(response != null)
-//                {
-                    AsyncOkHttpNetwork okHttpNetwork = new AsyncOkHttpNetwork();
-                    okHttpNetwork.execute(okHttpClient.newCall(request));
-//                }
+                if(response != null)
+                {
+                    AsyncResponseBodyNetwork network = new AsyncResponseBodyNetwork();
+//                    network.execute(response.body());
+                    result = new StringBuilder(network.execute(response.body()).get());
+//                    AsyncOkHttpNetwork okHttpNetwork = new AsyncOkHttpNetwork();
+//                    response = okHttpNetwork.execute(okHttpClient.newCall(request)).get();
+                }
             }
 
             if(inputStream != null)
@@ -313,7 +310,7 @@ public class NetworkWrapper {
         protected void onPostExecute(StringBuilder stringBuilder)
         {
             super.onPostExecute(stringBuilder);
-            mAsyncPostExecute.onPostExecute();
+//            mAsyncPostExecute.onPostExecute();
         }
     }
 
@@ -341,11 +338,11 @@ public class NetworkWrapper {
         protected void onPostExecute(InputStream inputStream)
         {
             super.onPostExecute(inputStream);
-            mAsyncPostExecute.onPostExecute();
+//            mAsyncPostExecute.onPostExecute();
         }
     }
 
-    private class AsyncOkHttpNetwork extends AsyncTask<Call, Void, Response>
+    private static class AsyncOkHttpNetwork extends AsyncTask<Call, Void, Response>
     {
         @Override
         protected Response doInBackground(Call... calls)
@@ -369,10 +366,7 @@ public class NetworkWrapper {
         {
             super.onPostExecute(response);
             response = response1;
-            AsyncResponseBodyNetwork network = new AsyncResponseBodyNetwork();
-            network.execute(response.body());
-
-            mAsyncPostExecute.onPostExecute();
+//            mAsyncPostExecute.onPostExecute();
         }
     }
 
@@ -398,7 +392,7 @@ public class NetworkWrapper {
         protected void onPostExecute(String s)
         {
             super.onPostExecute(s);
-            mAsyncPostExecute.onPostExecute();
+            mAsyncPostExecute.onPostExecute(s);
         }
     }
 

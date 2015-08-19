@@ -5,6 +5,6 @@ package test.humanity.networkwrappertest.interfaces;
  */
 public interface OnAsyncPostExecute {
 
-    void onPostExecute();
+    void onPostExecute(String s);
 
 }
