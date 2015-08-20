@@ -19,7 +19,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="test.humanity.networkwrappertest.DetailActivity" android:screenOrientation="portrait"></activity>
+        <activity
+            android:name="test.humanity.networkwrappertest.DetailActivity"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".MainActivity"></activity>
 
         <meta-data android:name="AA_DB_NAME" android:value="FlickrPhotos.db" />
     </application>

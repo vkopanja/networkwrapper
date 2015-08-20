@@ -2,27 +2,75 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_height="match_parent"
+              android:gravity="left|center_vertical">
 
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:gravity="center_vertical"
-        android:padding="5dp"/>
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="40dp"></android.support.v7.widget.Toolbar>
 
-    <TextView
-        android:id="@+id/tvOwner"
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:gravity="center_vertical"
-        android:padding="5dp"/>
+        android:layout_height="50dp">
 
-    <TextView
-        android:id="@+id/tvPublic"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:gravity="center_vertical"
+            android:text="Pic title: "
+            android:padding="5dp"
+            android:layout_marginRight="5dp"/>
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="300dp"
+            android:layout_height="fill_parent"
+            android:gravity="center_vertical"
+            android:ellipsize="end"
+            android:padding="5dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:gravity="center_vertical"
-        android:padding="5dp"/>
+        android:layout_height="50dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:gravity="center_vertical"
+            android:padding="5dp"
+            android:layout_marginRight="5dp"
+            android:text="Owned ID: "/>
+
+        <TextView
+            android:id="@+id/tvOwner"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:gravity="center_vertical"
+            android:padding="5dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="50dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:gravity="center_vertical"
+            android:padding="5dp"
+            android:text="Is Public? "
+            android:layout_marginRight="5dp"/>
+
+        <TextView
+            android:id="@+id/tvPublic"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:gravity="center_vertical"
+            android:padding="5dp"/>
+
+    </LinearLayout>
 
 </LinearLayout>

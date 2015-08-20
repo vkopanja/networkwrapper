@@ -15,10 +15,11 @@ import com.activeandroid.query.Select;
 import java.util.List;
 
 import test.humanity.networkwrappertest.classes.FlickrImage;
+import test.humanity.networkwrappertest.interfaces.Callbacks;
 import test.humanity.networkwrappertest.interfaces.OnAsyncPostExecute;
 
 
-public class MainActivity extends ActionBarActivity implements MainActivityFragment.Callbacks, OnAsyncPostExecute {
+public class MainActivity extends ActionBarActivity implements Callbacks, OnAsyncPostExecute {
 
     private boolean isTwoPane;
 
@@ -92,7 +93,7 @@ public class MainActivity extends ActionBarActivity implements MainActivityFragm
     }
 
     @Override
-    public void onPostExecute(String s)
+    public void onAsyncResult(String result)
     {
         ProgressBar pd = (ProgressBar) findViewById(R.id.progressBar);
         pd.setVisibility(View.GONE);

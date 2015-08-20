@@ -1,59 +1,61 @@
 package test.humanity.networkwrappertest.networking;
 
-import android.content.Context;
-import android.os.AsyncTask;
 import android.support.v4.util.Pair;
 
-import com.squareup.okhttp.Call;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.ResponseBody;
-import com.squareup.okhttp.internal.http.OkHeaders;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.concurrent.ExecutionException;
+import java.util.Iterator;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import test.humanity.networkwrappertest.interfaces.OnAsyncPostExecute;
-
 /**
  * Created by vkopanja on 18/08/2015.
+ * <p>A wrapper class for network operations</p>
+ * <p>Uses either {@link OkHttpClient} or {@link HttpURLConnection}</p>
  */
 public class NetworkWrapper {
 
-    private static OnAsyncPostExecute mAsyncPostExecute;
-
-    private Context ctx;
     private Type type;
     private String url;
+    private Method method;
+    private Pair<String, String>[] headerProperties;
+    private JSONObject postData;
 
     // HttpUrlConnection fields
     private HttpURLConnection httpURLConnection;
     private HttpsURLConnection httpsURLConnection;
     private InputStream inputStream;
-    private Method method;
-    private Pair<String, String>[] headerProperties;
 
     // OkHttp fields
     private OkHttpClient okHttpClient;
-    private static Response response;
-    private static Request request;
+    private Response response;
+    private Request request;
 
+    /**
+     * <p>A wrapper class for network operations</p>
+     * <p>Uses either {@link OkHttpClient} or {@link HttpURLConnection}</p>
+     * @param builder
+     */
     public NetworkWrapper(Builder builder) {
-        this.ctx = builder.ctx;
         this.url = builder.url;
         this.type = builder.type;
+        this.postData = builder.postData;
         this.httpURLConnection = builder.httpURLConnection;
         this.httpsURLConnection = builder.httpsURLConnection;
         this.inputStream = builder.inputStream;
@@ -66,9 +68,9 @@ public class NetworkWrapper {
 
     public static class Builder {
 
-        private Context ctx;
         private Type type;
         private String url;
+        private JSONObject postData;
 
         // HttpUrlConnection fields
         private HttpURLConnection httpURLConnection;
@@ -79,29 +81,31 @@ public class NetworkWrapper {
 
         // OkHttp fields
         private OkHttpClient okHttpClient;
-        private OkHeaders okHeaders;
         private static Response response;
         private static Request request;
 
-        public Builder context(Context ctx)
-        {
-            this.ctx = ctx;
-            return this;
-        }
+        /**
+         * Initalize a Builder with a {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Type}
+         * @param type {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Type}
+         */
         public Builder(Type type)
         {
             this.type = type;
         }
 
-        /***
+        /**
          * Initalize a connection with an http or https URL
-         * @param httpUrl
+         * @param httpUrl eg. http://example.com
+         * @throws MalformedURLException if URL doesn't contain HTTP or HTTPS
          * @return
          */
-        public Builder connection(String httpUrl)
+        public Builder connection(String httpUrl) throws MalformedURLException
         {
             try
             {
+                if(!httpUrl.contains("http") || !httpUrl.contains("https"))
+                    throw new MalformedURLException("URL must start with http or https.");
+
                 URL url = new URL(httpUrl);
                 this.url = httpUrl;
 
@@ -131,8 +135,14 @@ public class NetworkWrapper {
             return this;
         }
 
+        /**
+         * Set a method for the request
+         * @param method {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Method}
+         * @return
+         */
         public Builder method(Method method)
         {
+            this.method = method;
             try
             {
                 switch(type)
@@ -148,7 +158,7 @@ public class NetworkWrapper {
                         {
                             if(request != null)
                             {
-                                // TODO: eventually add method type for OkHttp
+                                // TODO: add method type for OkHttp
                             }
                         }
                         break;
@@ -162,8 +172,9 @@ public class NetworkWrapper {
             return this;
         }
 
-        /***
-         * Must be called when using {@link #type OkHttp}
+        /**
+         * Must be called when using {@link #type OkHttp} <br/>
+         * Builds the {@link #response Response}
          * @return
          */
         public Builder response()
@@ -176,15 +187,12 @@ public class NetworkWrapper {
                     if(okHttpClient != null)
                     {
                         if(this.request == null)
-                            throw new IllegalArgumentException("Request must be initalized.");
+                            throw new IllegalStateException("Request must be initalized.");
 
                         try
                         {
-                            AsyncOkHttpNetwork network = new AsyncOkHttpNetwork();
-                            this.response = network.execute(okHttpClient.newCall(this.request)).get();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        } catch (ExecutionException e) {
+                            this.response = okHttpClient.newCall(this.request).execute();
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -194,6 +202,11 @@ public class NetworkWrapper {
             return this;
         }
 
+        /**
+         * Sets the headers using key value {@link Pair}
+         * @param headers
+         * @return
+         */
         public Builder headers(Pair<String, String>... headers)
         {
             this.headerProperties = headers;
@@ -233,12 +246,73 @@ public class NetworkWrapper {
             return this;
         }
 
+        /**
+         * Set the post data using a key value {@link JSONObject}
+         * @param jo {@link JSONObject}
+         * @return
+         * @throws IllegalStateException When trying to set {@link #postData(JSONObject)} and we are using {@link #method GET}
+         */
+        public Builder postData(JSONObject jo) throws IllegalStateException
+        {
+            this.postData = jo;
+
+            if(method != Method.POST)
+                throw new IllegalStateException("Cannot send post data if method is GET.");
+
+            StringBuilder sb = new StringBuilder();
+            Iterator<String> iterator = postData.keys();
+
+            try {
+
+                while (iterator.hasNext()) {
+                    String key = iterator.next();
+                    Object value = postData.get(key);
+
+                    sb.append(key + "=" + value.toString() + "&");
+                }
+
+                sb.setLength(sb.toString().length() - 1);
+
+                if (httpURLConnection != null) {
+                    OutputStream os = httpURLConnection.getOutputStream();
+                    os.write(sb.toString().getBytes());
+                    os.close();
+                } else if (httpsURLConnection != null) {
+                    OutputStream os = httpsURLConnection.getOutputStream();
+                    os.write(sb.toString().getBytes());
+                    os.close();
+                } else if (okHttpClient != null) {
+                    RequestBody rb = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), sb.toString());
+                    this.request = new Request.Builder().url(url).post(rb).build();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return this;
+        }
+
+        /**
+         * Builds the NetworkWrapper class and returns an instance
+         * @return
+         */
         public NetworkWrapper build()
         {
+            if(type == Type.OkHttp)
+            {
+                if(response == null)
+                    throw new IllegalStateException("You must call .response() before calling build when using OkHttp Type.");
+            }
             return new NetworkWrapper(this);
         }
     }
 
+    /**
+     * Returns the strings response of our request
+     * @return
+     */
     public String getStringResponse()
     {
         StringBuilder result = new StringBuilder();
@@ -247,50 +321,19 @@ public class NetworkWrapper {
         {
             if(httpURLConnection != null || httpsURLConnection != null)
             {
-                AsyncHttpNetwork network = new AsyncHttpNetwork();
-                inputStream = network.execute(httpURLConnection != null ? httpURLConnection : httpsURLConnection).get();
+                inputStream = httpURLConnection != null ? httpURLConnection.getInputStream() : httpsURLConnection.getInputStream();
             }
             else if(okHttpClient != null)
             {
                 if(response != null)
                 {
-                    AsyncResponseBodyNetwork network = new AsyncResponseBodyNetwork();
-//                    network.execute(response.body());
-                    result = new StringBuilder(network.execute(response.body()).get());
-//                    AsyncOkHttpNetwork okHttpNetwork = new AsyncOkHttpNetwork();
-//                    response = okHttpNetwork.execute(okHttpClient.newCall(request)).get();
+                    result = new StringBuilder(response.body().string());
                 }
             }
 
             if(inputStream != null)
             {
-                AsyncGzipNetwork gzip = new AsyncGzipNetwork();
-                result = gzip.execute(inputStream).get();
-            }
-        }
-        catch(InterruptedException e)
-        {
-            e.printStackTrace();
-        }
-        catch(ExecutionException e)
-        {
-            e.printStackTrace();
-        }
-
-        return result.toString();
-    }
-
-    // region Async tasks
-
-    private class AsyncGzipNetwork extends AsyncTask<InputStream, Void, StringBuilder>
-    {
-        @Override
-        protected StringBuilder doInBackground(InputStream... inputStreams)
-        {
-            StringBuilder result = new StringBuilder();
-            try
-            {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStreams[0]));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
                 String line;
 
@@ -299,104 +342,12 @@ public class NetworkWrapper {
                     result.append(line);
                 }
             }
-            catch(IOException e)
-            {
-                e.printStackTrace();
-            }
-            return result;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        @Override
-        protected void onPostExecute(StringBuilder stringBuilder)
-        {
-            super.onPostExecute(stringBuilder);
-//            mAsyncPostExecute.onPostExecute();
-        }
+        return result.toString();
     }
-
-    private class AsyncHttpNetwork extends AsyncTask<HttpURLConnection, Void, InputStream>
-    {
-        @Override
-        protected InputStream doInBackground(HttpURLConnection... urls)
-        {
-            InputStream is = null;
-            try
-            {
-                is = urls[0].getInputStream();
-            }
-            catch(IOException e)
-            {
-                e.printStackTrace();
-                byte[] data = e.getMessage().getBytes(Charset.forName("UTF-8"));
-                is = new ByteArrayInputStream(data);
-            }
-
-            return is;
-        }
-
-        @Override
-        protected void onPostExecute(InputStream inputStream)
-        {
-            super.onPostExecute(inputStream);
-//            mAsyncPostExecute.onPostExecute();
-        }
-    }
-
-    private static class AsyncOkHttpNetwork extends AsyncTask<Call, Void, Response>
-    {
-        @Override
-        protected Response doInBackground(Call... calls)
-        {
-            Response response = null;
-
-            try
-            {
-                response = calls[0].execute();
-            }
-            catch(IOException e)
-            {
-                e.printStackTrace();
-            }
-
-            return response;
-        }
-
-        @Override
-        protected void onPostExecute(Response response1)
-        {
-            super.onPostExecute(response);
-            response = response1;
-//            mAsyncPostExecute.onPostExecute();
-        }
-    }
-
-    private class AsyncResponseBodyNetwork extends AsyncTask<ResponseBody, Void, String>
-    {
-        @Override
-        protected String doInBackground(ResponseBody... responseBodies)
-        {
-            String result = null;
-            try
-            {
-                result = responseBodies[0].string();
-            }
-            catch(IOException e)
-            {
-                e.printStackTrace();
-            }
-
-            return result;
-        }
-
-        @Override
-        protected void onPostExecute(String s)
-        {
-            super.onPostExecute(s);
-            mAsyncPostExecute.onPostExecute(s);
-        }
-    }
-
-    // endregion
 
     public enum Type
     {
@@ -412,10 +363,5 @@ public class NetworkWrapper {
         {
             this.type = type;
         }
-    }
-
-    public void setAsyncPostExecute(OnAsyncPostExecute mAsyncPostExecute)
-    {
-        this.mAsyncPostExecute = mAsyncPostExecute;
     }
 }

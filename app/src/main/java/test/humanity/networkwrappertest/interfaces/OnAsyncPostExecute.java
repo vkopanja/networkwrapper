@@ -5,6 +5,10 @@ package test.humanity.networkwrappertest.interfaces;
  */
 public interface OnAsyncPostExecute {
 
-    void onPostExecute(String s);
+    /**
+     * Used in the {@link android.app.Activity} so we can disable loaders etc.
+     * @param result
+     */
+    void onAsyncResult(String result);
 
 }
