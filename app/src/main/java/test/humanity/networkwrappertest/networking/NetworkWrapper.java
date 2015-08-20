@@ -1,6 +1,9 @@
 package test.humanity.networkwrappertest.networking;
 
+import android.app.Activity;
 import android.support.v4.util.Pair;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
@@ -31,6 +34,8 @@ import javax.net.ssl.HttpsURLConnection;
  */
 public class NetworkWrapper {
 
+    private static Activity act;
+    private static Exception ex;
     private Type type;
     private String url;
     private Method method;
@@ -53,6 +58,8 @@ public class NetworkWrapper {
      * @param builder
      */
     public NetworkWrapper(Builder builder) {
+        this.act = builder.act;
+        this.ex = builder.ex;
         this.url = builder.url;
         this.type = builder.type;
         this.postData = builder.postData;
@@ -68,6 +75,8 @@ public class NetworkWrapper {
 
     public static class Builder {
 
+        private static Activity act;
+        private static Exception ex;
         private Type type;
         private String url;
         private JSONObject postData;
@@ -86,20 +95,21 @@ public class NetworkWrapper {
 
         /**
          * Initalize a Builder with a {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Type}
+         * @param activity Used for handling errors with a toast
          * @param type {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Type}
          */
-        public Builder(Type type)
+        public Builder(Activity activity, Type type)
         {
+            this.act = activity;
             this.type = type;
         }
 
         /**
          * Initalize a connection with an http or https URL
          * @param httpUrl eg. http://example.com
-         * @throws MalformedURLException if URL doesn't contain HTTP or HTTPS
          * @return
          */
-        public Builder connection(String httpUrl) throws MalformedURLException
+        public Builder connection(String httpUrl)
         {
             try
             {
@@ -125,11 +135,18 @@ public class NetworkWrapper {
             }
             catch(MalformedURLException e)
             {
-                e.printStackTrace();
+                showToast(e.getMessage(), e);
+                ex = e;
             }
             catch(IOException e)
             {
-                e.printStackTrace();
+                showToast(e.getMessage(), e);
+                ex = e;
+            }
+            catch(Exception e)
+            {
+                showToast(e.getMessage(), e);
+                ex = e;
             }
 
             return this;
@@ -158,7 +175,7 @@ public class NetworkWrapper {
                         {
                             if(request != null)
                             {
-                                // TODO: add method type for OkHttp
+                                // no need to set method for OkHttp here
                             }
                         }
                         break;
@@ -166,7 +183,13 @@ public class NetworkWrapper {
             }
             catch(ProtocolException e)
             {
-                e.printStackTrace();
+                showToast(e.getMessage(), e);
+                ex = e;
+            }
+            catch (Exception e)
+            {
+                showToast(e.getMessage(), e);
+                ex = e;
             }
 
             return this;
@@ -193,7 +216,11 @@ public class NetworkWrapper {
                         {
                             this.response = okHttpClient.newCall(this.request).execute();
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            showToast(e.getMessage(), e);
+                            ex = e;
+                        } catch (Exception e) {
+                            showToast(e.getMessage(), e);
+                            ex = e;
                         }
                     }
                     break;
@@ -286,9 +313,11 @@ public class NetworkWrapper {
                     this.request = new Request.Builder().url(url).post(rb).build();
                 }
             } catch (JSONException e) {
-                e.printStackTrace();
+                showToast(e.getMessage(), e);
+                ex = e;
             } catch (IOException e) {
-                e.printStackTrace();
+                showToast(e.getMessage(), e);
+                ex = e;
             }
 
             return this;
@@ -300,11 +329,18 @@ public class NetworkWrapper {
          */
         public NetworkWrapper build()
         {
+            if(ex != null)
+            {
+                showToast(ex.getMessage(), ex);
+                return new NetworkWrapper(this);
+            }
+
             if(type == Type.OkHttp)
             {
                 if(response == null)
                     throw new IllegalStateException("You must call .response() before calling build when using OkHttp Type.");
             }
+
             return new NetworkWrapper(this);
         }
     }
@@ -319,6 +355,9 @@ public class NetworkWrapper {
 
         try
         {
+            if(ex != null)
+                throw ex;
+
             if(httpURLConnection != null || httpsURLConnection != null)
             {
                 inputStream = httpURLConnection != null ? httpURLConnection.getInputStream() : httpsURLConnection.getInputStream();
@@ -328,6 +367,9 @@ public class NetworkWrapper {
                 if(response != null)
                 {
                     result = new StringBuilder(response.body().string());
+                }
+                else {
+                    throw new IOException("There was a connection problem.");
                 }
             }
 
@@ -343,7 +385,11 @@ public class NetworkWrapper {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            showToast(e.getMessage(), e);
+            ex = e;
+        } catch (Exception e) {
+            showToast(e.getMessage(), e);
+            ex = e;
         }
 
         return result.toString();
@@ -363,5 +409,19 @@ public class NetworkWrapper {
         {
             this.type = type;
         }
+    }
+
+    private static void showToast(String message, Throwable t) {
+        if(act != null) {
+            final String msg = message;
+            act.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(act, msg, Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        Log.e(NetworkWrapper.class.toString(), message, t);
     }
 }

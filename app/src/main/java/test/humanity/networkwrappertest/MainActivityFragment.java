@@ -16,7 +16,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -174,15 +173,11 @@ public class MainActivityFragment extends Fragment implements OnAsyncPostExecute
 
         @Override
         protected String doInBackground(String... strings) {
-            try {
-                wrapper = new NetworkWrapper.Builder(NetworkWrapper.Type.OkHttp)
-                        .connection(String.format(Constants.FlickrPhotoSearch, Constants.FlickrApiKey, Constants.PerPage))
-                        .response()
-                        .build();
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-//            wrapper.setAsyncPostExecute((MainActivity) getActivity());
+            wrapper = new NetworkWrapper.Builder(getActivity(), NetworkWrapper.Type.OkHttp)
+                    .connection(String.format(Constants.FlickrPhotoSearch, Constants.FlickrApiKey, Constants.PerPage))
+                    .response()
+                    .build();
+
             return wrapper.getStringResponse();
         }
 
