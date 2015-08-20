@@ -37,101 +37,83 @@ public class FlickrImage extends Model implements Serializable {
     @Column(name = "IsPublic")
     private boolean isPublic;
 
-    public FlickrImage() {}
+    public FlickrImage() {
+    }
 
-    public FlickrImage(String imageUrl, String title)
-    {
+    public FlickrImage(String imageUrl, String title) {
         this.imageUrl = imageUrl;
         this.title = title;
     }
 
-    public String getPhotoId()
-    {
+    public String getPhotoId() {
         return photoId;
     }
 
-    public void setPhotoId(String id)
-    {
+    public void setPhotoId(String id) {
         this.photoId = id;
     }
 
-    public String getImageUrl()
-    {
-        if(imageUrl == null)
-        {
+    public String getImageUrl() {
+        if (imageUrl == null) {
             imageUrl = String.format(Constants.FlickrImageUrl, farm, server, photoId, secret);
         }
 
         return imageUrl;
     }
 
-    public void setImageUrl(String imageUrl)
-    {
+    public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
 
-    public String getTitle()
-    {
+    public String getTitle() {
         return title;
     }
 
-    public void setTitle(String title)
-    {
+    public void setTitle(String title) {
         this.title = title;
     }
 
-    public String getOwner()
-    {
+    public String getOwner() {
         return owner;
     }
 
-    public void setOwner(String owner)
-    {
+    public void setOwner(String owner) {
         this.owner = owner;
     }
 
-    public boolean getIsPublic()
-    {
+    public boolean getIsPublic() {
         return isPublic;
     }
 
-    public void setIsPublic(boolean isPublic)
-    {
+    public void setIsPublic(boolean isPublic) {
         this.isPublic = isPublic;
     }
 
-    public void setIsPublic(int isPublic)
-    {
+    public void setIsPublic(int isPublic) {
         this.isPublic = isPublic == 1;
     }
 
-    public String getSecret()
-    {
+    public String getSecret() {
         return secret;
     }
 
-    public void setSecret(String secret)
-    {
+    public void setSecret(String secret) {
         this.secret = secret;
     }
 
-    public int getFarm()
-    {
+    public int getFarm() {
         return farm;
     }
 
-    public void setFarm(int farm)
-    {
+    public void setFarm(int farm) {
         this.farm = farm;
     }
 
-    public int getServer()
-    {
+    public int getServer() {
         return server;
     }
 
-    public void setServer(int server)
-    {
+    public void setServer(int server) {
         this.server = server;
     }
 }

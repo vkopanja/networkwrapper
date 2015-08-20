@@ -13,8 +13,7 @@ import test.humanity.networkwrappertest.classes.FlickrImage;
 public class DetailActivity extends ActionBarActivity {
 
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 

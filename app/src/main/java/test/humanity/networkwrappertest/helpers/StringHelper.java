@@ -5,8 +5,13 @@ package test.humanity.networkwrappertest.helpers;
  */
 public class StringHelper {
 
-    public static boolean isNullOrEmpty(String s)
-    {
+    /**
+     * Returns if the string is either null or empty
+     *
+     * @param s
+     * @return
+     */
+    public static boolean isNullOrEmpty(String s) {
         return s == null || s.equals("");
     }
 }

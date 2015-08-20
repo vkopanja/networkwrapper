@@ -23,46 +23,38 @@ public class ImagesAdapter extends BaseAdapter {
     private Context ctx;
     private List<FlickrImage> imageUrls;
 
-    public ImagesAdapter(Context ctx, List<FlickrImage> imageUrls)
-    {
+    public ImagesAdapter(Context ctx, List<FlickrImage> imageUrls) {
         this.ctx = ctx;
         this.imageUrls = imageUrls;
     }
 
     @Override
-    public int getCount()
-    {
+    public int getCount() {
         return imageUrls.size();
     }
 
     @Override
-    public Object getItem(int i)
-    {
+    public Object getItem(int i) {
         return imageUrls.get(i);
     }
 
     @Override
-    public long getItemId(int i)
-    {
+    public long getItemId(int i) {
         return 0;
     }
 
     @Override
-    public View getView(int i, View view, ViewGroup viewGroup)
-    {
+    public View getView(int i, View view, ViewGroup viewGroup) {
         ViewHolder holder;
 
-        if(view == null)
-        {
+        if (view == null) {
             LayoutInflater layoutInflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = layoutInflater.inflate(R.layout.list_item_main, viewGroup, false);
             holder = new ViewHolder();
             holder.imgSmall = (ImageView) view.findViewById(R.id.imgSmall);
             holder.tvShortText = (TextView) view.findViewById(R.id.tvShortText);
             view.setTag(holder);
-        }
-        else
-        {
+        } else {
             holder = (ViewHolder) view.getTag();
         }
 
@@ -72,8 +64,7 @@ public class ImagesAdapter extends BaseAdapter {
         return view;
     }
 
-    static class ViewHolder
-    {
+    static class ViewHolder {
         ImageView imgSmall;
         TextView tvShortText;
     }

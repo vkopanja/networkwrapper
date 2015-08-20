@@ -55,6 +55,7 @@ public class NetworkWrapper {
     /**
      * <p>A wrapper class for network operations</p>
      * <p>Uses either {@link OkHttpClient} or {@link HttpURLConnection}</p>
+     *
      * @param builder
      */
     public NetworkWrapper(Builder builder) {
@@ -73,10 +74,82 @@ public class NetworkWrapper {
         this.request = builder.request;
     }
 
+    private static void showToast(String message, Throwable t) {
+        if (act != null) {
+            final String msg = message;
+            act.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(act, msg, Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        Log.e(NetworkWrapper.class.toString(), message, t);
+    }
+
+    /**
+     * Returns the strings response of our request
+     *
+     * @return
+     */
+    public String getStringResponse() {
+        StringBuilder result = new StringBuilder();
+
+        try {
+            if (ex != null)
+                throw ex;
+
+            if (httpURLConnection != null || httpsURLConnection != null) {
+                inputStream = httpURLConnection != null ? httpURLConnection.getInputStream() : httpsURLConnection.getInputStream();
+            } else if (okHttpClient != null) {
+                if (response != null) {
+                    result = new StringBuilder(response.body().string());
+                } else {
+                    throw new IOException("There was a connection problem.");
+                }
+            }
+
+            if (inputStream != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    result.append(line);
+                }
+            }
+        } catch (IOException e) {
+            showToast(e.getMessage(), e);
+            ex = e;
+        } catch (Exception e) {
+            showToast(e.getMessage(), e);
+            ex = e;
+        }
+
+        return result.toString();
+    }
+
+    public enum Type {
+        OkHttp, HttpUrlConnection
+    }
+
+    public enum Method {
+        POST("POST"), GET("GET");
+
+        private String type;
+
+        Method(String type) {
+            this.type = type;
+        }
+    }
+
     public static class Builder {
 
         private static Activity act;
         private static Exception ex;
+        private static Response response;
+        private static Request request;
         private Type type;
         private String url;
         private JSONObject postData;
@@ -90,39 +163,35 @@ public class NetworkWrapper {
 
         // OkHttp fields
         private OkHttpClient okHttpClient;
-        private static Response response;
-        private static Request request;
 
         /**
          * Initalize a Builder with a {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Type}
+         *
          * @param activity Used for handling errors with a toast
-         * @param type {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Type}
+         * @param type     {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Type}
          */
-        public Builder(Activity activity, Type type)
-        {
+        public Builder(Activity activity, Type type) {
             this.act = activity;
             this.type = type;
         }
 
         /**
          * Initalize a connection with an http or https URL
+         *
          * @param httpUrl eg. http://example.com
          * @return
          */
-        public Builder connection(String httpUrl)
-        {
-            try
-            {
-                if(!httpUrl.contains("http") || !httpUrl.contains("https"))
+        public Builder connection(String httpUrl) {
+            try {
+                if (!httpUrl.contains("http") || !httpUrl.contains("https"))
                     throw new MalformedURLException("URL must start with http or https.");
 
                 URL url = new URL(httpUrl);
                 this.url = httpUrl;
 
-                switch(type)
-                {
+                switch (type) {
                     case HttpUrlConnection:
-                        if(httpUrl.contains("https"))
+                        if (httpUrl.contains("https"))
                             this.httpsURLConnection = (HttpsURLConnection) url.openConnection();
                         else
                             this.httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -132,19 +201,13 @@ public class NetworkWrapper {
                         this.request = new Request.Builder().url(httpUrl).build();
                         break;
                 }
-            }
-            catch(MalformedURLException e)
-            {
+            } catch (MalformedURLException e) {
                 showToast(e.getMessage(), e);
                 ex = e;
-            }
-            catch(IOException e)
-            {
+            } catch (IOException e) {
                 showToast(e.getMessage(), e);
                 ex = e;
-            }
-            catch(Exception e)
-            {
+            } catch (Exception e) {
                 showToast(e.getMessage(), e);
                 ex = e;
             }
@@ -154,40 +217,32 @@ public class NetworkWrapper {
 
         /**
          * Set a method for the request
+         *
          * @param method {@link test.humanity.networkwrappertest.networking.NetworkWrapper.Method}
          * @return
          */
-        public Builder method(Method method)
-        {
+        public Builder method(Method method) {
             this.method = method;
-            try
-            {
-                switch(type)
-                {
+            try {
+                switch (type) {
                     case HttpUrlConnection:
-                        if(httpURLConnection != null)
+                        if (httpURLConnection != null)
                             httpURLConnection.setRequestMethod(method.type);
-                        if(httpsURLConnection != null)
+                        if (httpsURLConnection != null)
                             httpsURLConnection.setRequestMethod(method.type);
                         break;
                     case OkHttp:
-                        if(okHttpClient != null)
-                        {
-                            if(request != null)
-                            {
+                        if (okHttpClient != null) {
+                            if (request != null) {
                                 // no need to set method for OkHttp here
                             }
                         }
                         break;
                 }
-            }
-            catch(ProtocolException e)
-            {
+            } catch (ProtocolException e) {
                 showToast(e.getMessage(), e);
                 ex = e;
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 showToast(e.getMessage(), e);
                 ex = e;
             }
@@ -198,22 +253,19 @@ public class NetworkWrapper {
         /**
          * Must be called when using {@link #type OkHttp} <br/>
          * Builds the {@link #response Response}
+         *
          * @return
          */
-        public Builder response()
-        {
-            switch(type)
-            {
+        public Builder response() {
+            switch (type) {
                 case HttpUrlConnection:
                     break;
                 case OkHttp:
-                    if(okHttpClient != null)
-                    {
-                        if(this.request == null)
+                    if (okHttpClient != null) {
+                        if (this.request == null)
                             throw new IllegalStateException("Request must be initalized.");
 
-                        try
-                        {
+                        try {
                             this.response = okHttpClient.newCall(this.request).execute();
                         } catch (IOException e) {
                             showToast(e.getMessage(), e);
@@ -231,37 +283,29 @@ public class NetworkWrapper {
 
         /**
          * Sets the headers using key value {@link Pair}
+         *
          * @param headers
          * @return
          */
-        public Builder headers(Pair<String, String>... headers)
-        {
+        public Builder headers(Pair<String, String>... headers) {
             this.headerProperties = headers;
 
-            switch(type)
-            {
+            switch (type) {
                 case HttpUrlConnection:
-                    if(httpURLConnection != null)
-                    {
-                        for(Pair<String, String> item : headers)
-                        {
+                    if (httpURLConnection != null) {
+                        for (Pair<String, String> item : headers) {
                             httpURLConnection.setRequestProperty(item.first, item.second);
                         }
-                    }
-                    else if(httpsURLConnection != null)
-                    {
-                        for(Pair<String, String> item : headers)
-                        {
+                    } else if (httpsURLConnection != null) {
+                        for (Pair<String, String> item : headers) {
                             httpsURLConnection.setRequestProperty(item.first, item.second);
                         }
                     }
                     break;
                 case OkHttp:
-                    if(okHttpClient != null)
-                    {
+                    if (okHttpClient != null) {
                         Request.Builder requestBuilder = new Request.Builder().url(url);
-                        for(Pair<String, String> item : headers)
-                        {
+                        for (Pair<String, String> item : headers) {
                             requestBuilder.header(item.first, item.second);
                         }
 
@@ -275,15 +319,15 @@ public class NetworkWrapper {
 
         /**
          * Set the post data using a key value {@link JSONObject}
+         *
          * @param jo {@link JSONObject}
          * @return
          * @throws IllegalStateException When trying to set {@link #postData(JSONObject)} and we are using {@link #method GET}
          */
-        public Builder postData(JSONObject jo) throws IllegalStateException
-        {
+        public Builder postData(JSONObject jo) throws IllegalStateException {
             this.postData = jo;
 
-            if(method != Method.POST)
+            if (method != Method.POST)
                 throw new IllegalStateException("Cannot send post data if method is GET.");
 
             StringBuilder sb = new StringBuilder();
@@ -325,103 +369,21 @@ public class NetworkWrapper {
 
         /**
          * Builds the NetworkWrapper class and returns an instance
+         *
          * @return
          */
-        public NetworkWrapper build()
-        {
-            if(ex != null)
-            {
+        public NetworkWrapper build() {
+            if (ex != null) {
                 showToast(ex.getMessage(), ex);
                 return new NetworkWrapper(this);
             }
 
-            if(type == Type.OkHttp)
-            {
-                if(response == null)
+            if (type == Type.OkHttp) {
+                if (response == null)
                     throw new IllegalStateException("You must call .response() before calling build when using OkHttp Type.");
             }
 
             return new NetworkWrapper(this);
         }
-    }
-
-    /**
-     * Returns the strings response of our request
-     * @return
-     */
-    public String getStringResponse()
-    {
-        StringBuilder result = new StringBuilder();
-
-        try
-        {
-            if(ex != null)
-                throw ex;
-
-            if(httpURLConnection != null || httpsURLConnection != null)
-            {
-                inputStream = httpURLConnection != null ? httpURLConnection.getInputStream() : httpsURLConnection.getInputStream();
-            }
-            else if(okHttpClient != null)
-            {
-                if(response != null)
-                {
-                    result = new StringBuilder(response.body().string());
-                }
-                else {
-                    throw new IOException("There was a connection problem.");
-                }
-            }
-
-            if(inputStream != null)
-            {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-
-                while((line = reader.readLine()) != null)
-                {
-                    result.append(line);
-                }
-            }
-        } catch (IOException e) {
-            showToast(e.getMessage(), e);
-            ex = e;
-        } catch (Exception e) {
-            showToast(e.getMessage(), e);
-            ex = e;
-        }
-
-        return result.toString();
-    }
-
-    public enum Type
-    {
-        OkHttp, HttpUrlConnection
-    }
-
-    public enum Method
-    {
-        POST("POST"), GET("GET");
-
-        private String type;
-        Method(String type)
-        {
-            this.type = type;
-        }
-    }
-
-    private static void showToast(String message, Throwable t) {
-        if(act != null) {
-            final String msg = message;
-            act.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(act, msg, Toast.LENGTH_LONG).show();
-                }
-            });
-        }
-
-        Log.e(NetworkWrapper.class.toString(), message, t);
     }
 }

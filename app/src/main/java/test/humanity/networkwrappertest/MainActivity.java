@@ -24,43 +24,38 @@ public class MainActivity extends ActionBarActivity implements Callbacks, OnAsyn
     private boolean isTwoPane;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         ProgressBar pd = (ProgressBar) findViewById(R.id.progressBar);
         List<FlickrImage> imageList = new Select().from(FlickrImage.class).execute();
-        if(imageList.size() > 0)
+        if (imageList.size() > 0)
             pd.setVisibility(View.GONE);
 
         isTwoPane = false;
 
-        if(findViewById(R.id.fragmentDetail) != null)
-        {
+        if (findViewById(R.id.fragmentDetail) != null) {
             isTwoPane = true;
         }
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
+    public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
+    public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if(id == R.id.action_settings)
-        {
+        if (id == R.id.action_settings) {
             return true;
         }
 
@@ -68,10 +63,8 @@ public class MainActivity extends ActionBarActivity implements Callbacks, OnAsyn
     }
 
     @Override
-    public void onItemSelected(FlickrImage image)
-    {
-        if(isTwoPane)
-        {
+    public void onItemSelected(FlickrImage image) {
+        if (isTwoPane) {
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
 
@@ -83,9 +76,7 @@ public class MainActivity extends ActionBarActivity implements Callbacks, OnAsyn
 
             ft.replace(R.id.fragmentDetail, detailFragment);
             ft.commit();
-        }
-        else
-        {
+        } else {
             Intent detailActivity = new Intent(this, DetailActivity.class);
             detailActivity.putExtra("image", image);
             startActivity(detailActivity);
@@ -93,8 +84,7 @@ public class MainActivity extends ActionBarActivity implements Callbacks, OnAsyn
     }
 
     @Override
-    public void onAsyncResult(String result)
-    {
+    public void onAsyncResult(String result) {
         ProgressBar pd = (ProgressBar) findViewById(R.id.progressBar);
         pd.setVisibility(View.GONE);
     }

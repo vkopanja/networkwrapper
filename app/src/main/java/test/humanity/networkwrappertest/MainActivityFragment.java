@@ -32,6 +32,11 @@ import test.humanity.networkwrappertest.networking.NetworkWrapper;
  */
 public class MainActivityFragment extends Fragment implements OnAsyncPostExecute {
 
+    private static Callbacks sCallbacks = new Callbacks() {
+        @Override
+        public void onItemSelected(FlickrImage image) {
+        }
+    };
     private NetworkWrapper wrapper;
     private ListView listView;
     private String response;
@@ -40,51 +45,40 @@ public class MainActivityFragment extends Fragment implements OnAsyncPostExecute
     private List<FlickrImage> photoUrls;
     private JSONObject result;
 
-    public MainActivityFragment()
-    {
+    public MainActivityFragment() {
     }
 
     @Override
-    public void onAttach(Activity activity)
-    {
+    public void onAttach(Activity activity) {
         super.onAttach(activity);
-        if(!(activity instanceof Callbacks))
-        {
+        if (!(activity instanceof Callbacks)) {
             throw new IllegalStateException("Activity must implement fragment's callbacks.");
         }
         mCallbacks = (Callbacks) activity;
     }
 
     @Override
-    public void onDetach()
-    {
+    public void onDetach() {
         super.onDetach();
         mCallbacks = sCallbacks;
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         photoUrls = new Select().from(FlickrImage.class).execute();
 
-        if(photoUrls.size() == 0)
-        {
-            try
-            {
-                if(savedInstanceState == null || savedInstanceState.getString("response") == null) {
+        if (photoUrls.size() == 0) {
+            try {
+                if (savedInstanceState == null || savedInstanceState.getString("response") == null) {
                     AsyncTest test = new AsyncTest();
                     test.execute(String.format(Constants.FlickrPhotoSearch, Constants.FlickrApiKey, Constants.PerPage));
-                }
-                else
-                {
+                } else {
                     result = new JSONObject(savedInstanceState.getString("response"));
                     savedInstanceState.putString("response", result.toString());
                 }
-            }
-            catch(JSONException e)
-            {
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
@@ -93,15 +87,13 @@ public class MainActivityFragment extends Fragment implements OnAsyncPostExecute
     private void getData() throws JSONException {
         response = result.toString();
 
-        if(result.get("stat") != null && result.getString("stat").equals("ok"))
-        {
+        if (result.get("stat") != null && result.getString("stat").equals("ok")) {
             JSONObject photoData = result.getJSONObject("photos");
             JSONArray photosArray = photoData.getJSONArray("photo");
 
             photoUrls = new ArrayList<>();
 
-            for(int i = 0; i < photosArray.length(); i++)
-            {
+            for (int i = 0; i < photosArray.length(); i++) {
                 JSONObject jo = photosArray.getJSONObject(i);
 
                 String photoSearch = String.format(Constants.FlickrImageUrl, jo.getInt("farm"), jo.getInt("server"), jo.getString("id"), jo.getString("secret"));
@@ -125,8 +117,7 @@ public class MainActivityFragment extends Fragment implements OnAsyncPostExecute
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-    {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View v = inflater.inflate(R.layout.fragment_main, container, false);
         listView = (ListView) v.findViewById(R.id.listViewMain);
@@ -136,8 +127,7 @@ public class MainActivityFragment extends Fragment implements OnAsyncPostExecute
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
-            {
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 mCallbacks.onItemSelected(photoUrls.get(i));
             }
         });
@@ -146,8 +136,7 @@ public class MainActivityFragment extends Fragment implements OnAsyncPostExecute
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState)
-    {
+    public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString("response", response);
 
@@ -155,21 +144,13 @@ public class MainActivityFragment extends Fragment implements OnAsyncPostExecute
 
     @Override
     public void onAsyncResult(String result) {
-        ((MainActivity)getActivity()).onAsyncResult(result);
+        ((MainActivity) getActivity()).onAsyncResult(result);
     }
-
-    private static Callbacks sCallbacks = new Callbacks() {
-        @Override
-        public void onItemSelected(FlickrImage image)
-        {
-        }
-    };
 
     /***
      * Used for testing of the network wrapper
      */
-    private class AsyncTest extends AsyncTask<String, Void, String>
-    {
+    private class AsyncTest extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... strings) {

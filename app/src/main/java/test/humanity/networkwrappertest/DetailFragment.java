@@ -15,14 +15,12 @@ import test.humanity.networkwrappertest.classes.FlickrImage;
  */
 public class DetailFragment extends Fragment {
 
-    public DetailFragment()
-    {
+    public DetailFragment() {
     }
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-    {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View v = inflater.inflate(R.layout.fragment_detail, container, false);
         TextView tvTitle = (TextView) v.findViewById(R.id.tvTitle);
@@ -30,8 +28,7 @@ public class DetailFragment extends Fragment {
         TextView tvPublic = (TextView) v.findViewById(R.id.tvPublic);
 
         Bundle bundle = getArguments();
-        if(bundle != null)
-        {
+        if (bundle != null) {
             FlickrImage image = (FlickrImage) bundle.getSerializable("image");
             tvTitle.setText(image.getTitle());
             tvOwner.setText(image.getOwner());
